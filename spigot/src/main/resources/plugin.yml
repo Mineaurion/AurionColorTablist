@@ -1,0 +1,7 @@
+name: Aurionscolortablist
+version: @version@
+main: com.mineaurion.aurionscolortablist.Aurionscolortablist
+authors: [Yann151924]
+description: Color Tablist based on luckperms
+website: https://mineaurion.com
+depend: [LuckPerms]
