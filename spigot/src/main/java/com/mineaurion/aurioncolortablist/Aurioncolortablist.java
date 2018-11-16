@@ -1,4 +1,4 @@
-package com.mineaurion.aurionscolortablist;
+package com.mineaurion.aurioncolortablist;
 
 import me.lucko.luckperms.api.Contexts;
 import me.lucko.luckperms.api.LuckPermsApi;
@@ -17,7 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Map;
 import java.util.Optional;
 
-public final class Aurionscolortablist extends JavaPlugin implements Listener {
+public final class Aurioncolortablist extends JavaPlugin implements Listener {
 
     private LuckPermsApi api;
 
@@ -31,8 +31,8 @@ public final class Aurionscolortablist extends JavaPlugin implements Listener {
             getServer().getPluginManager().registerEvents(this, this);
             getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
                 public void run() {
-                    for (Player player : Aurionscolortablist.this.getServer().getOnlinePlayers()) {
-                        Aurionscolortablist.this.updateName(player);
+                    for (Player player : Aurioncolortablist.this.getServer().getOnlinePlayers()) {
+                        Aurioncolortablist.this.updateName(player);
                     }
                 }
             }, 0L, 200L);
@@ -40,7 +40,7 @@ public final class Aurionscolortablist extends JavaPlugin implements Listener {
         else{
             Bukkit.getPluginManager().disablePlugin(this);
         }
-        this.getCommand("aurionscolortablist").setExecutor(new ReloadCommand(this));
+        this.getCommand("aurioncolortablist").setExecutor(new ReloadCommand(this));
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.mineaurion.aurionscolortablist;
+package com.mineaurion.aurioncolortablist;
 
 import com.google.common.reflect.TypeToken;
 import ninja.leaping.configurate.objectmapping.Setting;

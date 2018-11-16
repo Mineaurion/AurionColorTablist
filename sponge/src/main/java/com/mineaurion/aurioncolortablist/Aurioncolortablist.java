@@ -1,4 +1,4 @@
-package com.mineaurion.aurionscolortablist;
+package com.mineaurion.aurioncolortablist;
 
 import com.google.inject.Inject;
 import me.lucko.luckperms.LuckPerms;
@@ -20,15 +20,12 @@ import org.spongepowered.api.entity.living.player.tab.TabListEntry;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
-import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.Task;
-import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,8 +34,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Plugin(
-        id = "aurionscolortablist",
-        name = "Aurionscolortablist",
+        id = "aurioncolortablist",
+        name = "Aurioncolortablist",
         description = "Color Tablist based on luckperms",
         url = "https://mineaurion.com",
         authors = {
@@ -48,7 +45,7 @@ import java.util.concurrent.TimeUnit;
             @Dependency(id= "luckperms")
         }
 )
-public class Aurionscolortablist {
+public class Aurioncolortablist {
 
     @Inject
     private Logger logger;

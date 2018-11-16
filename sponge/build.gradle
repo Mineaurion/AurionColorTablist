@@ -8,6 +8,11 @@ dependencies {
 
 sponge.plugin.id = pluginId
 
+jar{
+    archivesBaseName = project.jarName + "-" + project.name
+}
+
+
 shadowJar {
     dependencies {
     }

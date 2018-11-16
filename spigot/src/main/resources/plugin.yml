@@ -1,6 +1,6 @@
-name: Aurionscolortablist
+name: Aurioncolortablist
 version: ${version}
-main: com.mineaurion.aurionscolortablist.Aurionscolortablist
+main: com.mineaurion.aurioncolortablist.Aurioncolortablist
 authors: [Yann151924]
 description: Color Tablist based on luckperms
 website: https://mineaurion.com

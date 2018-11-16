@@ -19,6 +19,10 @@ processResources {
     }
 }
 
+jar{
+    archivesBaseName = project.jarName + "-" + project.name
+}
+
 shadowJar {
     dependencies {
     }
