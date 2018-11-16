@@ -6,6 +6,7 @@ import me.lucko.luckperms.api.User;
 import me.lucko.luckperms.api.caching.MetaData;
 import me.lucko.luckperms.api.caching.UserData;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,7 +40,7 @@ public final class Aurionscolortablist extends JavaPlugin implements Listener {
         else{
             Bukkit.getPluginManager().disablePlugin(this);
         }
-
+        this.getCommand("aurionscolortablist").setExecutor(new ReloadCommand(this));
     }
 
     @Override
@@ -57,11 +58,11 @@ public final class Aurionscolortablist extends JavaPlugin implements Listener {
         if(getConfig().getBoolean("prefix")){
             newName.append(getPrefixLuckPerms(player).orElse(""));
         }
-        newName.append("§")
+        newName.append("&")
                 .append(getMetanamecolor(player).orElse(""))
                 .append(player.getDisplayName());
 
-        player.setPlayerListName(newName.toString());
+        player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',newName.toString()));
     }
 
     private Optional<String> getMetanamecolor(Player player){

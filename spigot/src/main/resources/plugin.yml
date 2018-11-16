@@ -1,7 +1,15 @@
 name: Aurionscolortablist
-version: @version@
+version: ${version}
 main: com.mineaurion.aurionscolortablist.Aurionscolortablist
 authors: [Yann151924]
 description: Color Tablist based on luckperms
 website: https://mineaurion.com
 depend: [LuckPerms]
+commands:
+  aurionscolortablist:
+    aliases: [act]
+    description: "Aurions Color Tablist Command"
+permissions:
+  aurionscolortablist.admin:
+    default: false
+    description: "AurionS Color Tablist Admin"
