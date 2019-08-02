@@ -13,7 +13,7 @@ subprojects {
     apply plugin: 'maven'
     apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
-        compile 'me.lucko.luckperms:luckperms-api:4.2'
+        compile 'me.lucko.luckperms:luckperms-api:4.4'
     }
 
     group = project.pluginGroup

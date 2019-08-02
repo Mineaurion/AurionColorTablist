@@ -6,10 +6,10 @@ description: Color Tablist based on luckperms
 website: https://mineaurion.com
 depend: [LuckPerms]
 commands:
-  aurionscolortablist:
+  aurioncolortablist:
     aliases: [act]
-    description: "Aurions Color Tablist Command"
+    description: "Aurion Color Tablist Command"
 permissions:
-  aurionscolortablist.admin:
+  aurioncolortablist.admin:
     default: false
-    description: "AurionS Color Tablist Admin"
+    description: "Aurion Color Tablist Admin"

@@ -29,6 +29,7 @@ import org.spongepowered.api.text.serializer.TextSerializers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -97,49 +98,44 @@ public class Aurioncolortablist {
 
     private void updateName(Player player){
         TabList tabList = player.getTabList();
-        Optional<TabListEntry> tabListEntry = tabList.getEntry(player.getUniqueId());
-        StringBuilder newName = new StringBuilder();
-        if(tabListEntry.isPresent()){
-            TabListEntry entry = tabListEntry.get();
-            if(config.prefix){
-                newName.append(getPrefixLuckPerms(player).orElse(""));
-            }
-            newName.append("&")
-                    .append(getMetanamecolor(player).orElse(""))
-                    .append(player.getName());
-
+        for (TabListEntry entry: tabList.getEntries()) {
+            StringBuilder newName = new StringBuilder();
+            Optional<Player> playerEntry = Sponge.getServer().getPlayer(entry.getProfile().getUniqueId());
+            playerEntry.ifPresent( p -> {
+                if(config.prefix){
+                    newName.append(getPrefixLuckPerms(p).orElse(""));
+                }
+                newName.append("&")
+                        .append(getMetanamecolor(p).orElse(""))
+                        .append(p.getName());
+            });
             entry.setDisplayName(TextSerializers.FORMATTING_CODE.deserialize(newName.toString()));
+
         }
     }
 
     private Optional<String> getMetanamecolor(Player player){
         Optional<String> namecolor = Optional.empty();
-        if(luckPermsApi.isPresent()){
-            LuckPermsApi api = luckPermsApi.get();
-            Optional<User> user = api.getUserSafe(player.getUniqueId());
-            if(user.isPresent()){
-                Contexts contexts = api.getContextsForPlayer(player);
-                UserData userData = user.get().getCachedData();
-                MetaData metaData = userData.getMetaData(contexts);
+        LuckPermsApi api = luckPermsApi.get();
+        Optional<User> user = api.getUserSafe(player.getUniqueId());
+        if(user.isPresent()){
+            Contexts contexts = api.getContextsForPlayer(player);
+            MetaData metaData = user.get().getCachedData().getMetaData(contexts);
 
-                Map<String ,String> metas = metaData.getMeta();
-                namecolor = Optional.of(metas.get(config.meta));
-            }
+            Map<String ,String> metas = metaData.getMeta();
+            namecolor = Optional.of(metas.get(config.meta));
         }
         return namecolor;
     }
 
     private Optional<String> getPrefixLuckPerms(Player player){
         Optional<String> prefix = Optional.empty();
-        if(luckPermsApi.isPresent()){
-            LuckPermsApi api = luckPermsApi.get();
-            Optional<User> user = api.getUserSafe(player.getUniqueId());
-            if(user.isPresent()){
-                Contexts contexts = api.getContextsForPlayer(player);
-                UserData userData = user.get().getCachedData();
-                MetaData metaData = userData.getMetaData(contexts);
-                prefix = Optional.of(metaData.getPrefix());
-            }
+        LuckPermsApi api = luckPermsApi.get();
+        Optional<User> user = api.getUserSafe(player.getUniqueId());
+        if(user.isPresent()){
+            Contexts contexts = api.getContextsForPlayer(player);
+            MetaData metaData = user.get().getCachedData().getMetaData(contexts);
+            prefix = Optional.of(metaData.getPrefix());
         }
         return prefix;
     }
