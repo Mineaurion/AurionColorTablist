@@ -1,41 +1,42 @@
 package com.mineaurion.aurioncolortablist;
 
-import me.lucko.luckperms.api.Contexts;
-import me.lucko.luckperms.api.LuckPermsApi;
-import me.lucko.luckperms.api.User;
-import me.lucko.luckperms.api.caching.MetaData;
-import me.lucko.luckperms.api.caching.UserData;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.query.QueryOptions;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 
+import javax.swing.text.html.Option;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 public final class Aurioncolortablist extends JavaPlugin implements Listener {
 
-    private LuckPermsApi api;
+    private LuckPerms api;
+    private Scoreboard board;
 
     @Override
     public void onEnable() {
         getConfig().options().copyDefaults(true);
         saveDefaultConfig();
-        RegisteredServiceProvider<LuckPermsApi> provider = Bukkit.getServicesManager().getRegistration(LuckPermsApi.class);
+        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        board = Bukkit.getScoreboardManager().getMainScoreboard();
         if(provider != null){
             api = provider.getProvider();
             getServer().getPluginManager().registerEvents(this, this);
-            getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-                public void run() {
-                    for (Player player : Aurioncolortablist.this.getServer().getOnlinePlayers()) {
-                        Aurioncolortablist.this.updateName(player);
-                    }
-                }
-            }, 0L, 200L);
         }
         else{
             Bukkit.getPluginManager().disablePlugin(this);
@@ -43,50 +44,65 @@ public final class Aurioncolortablist extends JavaPlugin implements Listener {
         this.getCommand("aurioncolortablist").setExecutor(new ReloadCommand(this));
     }
 
-    @Override
-    public void onDisable() {
-        getServer().getScheduler().cancelTasks(this);
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event){
+        updateScoreBoard(event.getPlayer());
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event){
-        updateName(event.getPlayer());
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        leavingScoreBoard(event.getPlayer());
     }
 
-    private void updateName(Player player){
-        StringBuilder newName = new StringBuilder();
-        if(getConfig().getBoolean("prefix")){
-            newName.append(getPrefixLuckPerms(player).orElse(""));
-        }
-        newName.append("&")
-                .append(getMetanamecolor(player).orElse(""))
-                .append(player.getDisplayName());
-
-        player.setPlayerListName(ChatColor.translateAlternateColorCodes('&',newName.toString()));
+    @EventHandler
+    public void onPlayerKick(PlayerKickEvent event) {
+        leavingScoreBoard(event.getPlayer());
     }
 
-    private Optional<String> getMetanamecolor(Player player){
-        Optional<String> namecolor = Optional.empty();
-        Optional<User> user = api.getUserSafe(player.getUniqueId());
-        if(user.isPresent()){
-            Contexts contexts = api.getContextsForPlayer(player);
-            UserData userData = user.get().getCachedData();
-            MetaData metaData = userData.getMetaData(contexts);
-            Map<String, String> metas = metaData.getMeta();
-            namecolor = Optional.of(metas.get(getConfig().getString("meta")));
+    public void leavingScoreBoard(Player player) {
+        Set<Team> teams = player.getScoreboard().getTeams();
+        for (Team team: teams) {
+            board.getTeam(team.getName()).removePlayer(player);
+            if(team.getSize() <= 1) {
+                team.unregister();
+            }
         }
-        return namecolor;
     }
 
-    private Optional<String> getPrefixLuckPerms(Player player){
-        Optional<String> prefix = Optional.empty();
-        Optional<User> user = api.getUserSafe(player.getUniqueId());
-        if(user.isPresent()){
-            Contexts contexts = api.getContextsForPlayer(player);
-            UserData userData = user.get().getCachedData();
-            MetaData metaData = userData.getMetaData(contexts);
-            prefix = Optional.of(metaData.getPrefix());
+    public void updateScoreBoard(Player player) {
+        Optional<String> metaColor = getMetaNameColor(player.getUniqueId());
+        Team team = null;
+        if(metaColor.isPresent()) {
+            if(board.getTeam(metaColor.get()) == null) {
+                team = board.registerNewTeam(metaColor.get());
+                team.setPrefix(ChatColor.translateAlternateColorCodes('&',"&" + metaColor.get()));
+            } else {
+                team = board.getTeam(metaColor.get());
+            }
+        } else {
+            team = board.registerNewTeam("default");
         }
-        return prefix;
+        System.out.println("Ajout Tablist");
+        team.addPlayer(Bukkit.getOfflinePlayer(player.getUniqueId()));
+        player.setScoreboard(board);
+    }
+
+    private Optional<CachedMetaData> getMetaData(UUID uuid){
+        Optional<CachedMetaData> cachedMetaData = Optional.empty();
+        if(this.api != null){
+            User user = this.api.getUserManager().getUser(uuid);
+            if(user != null){
+                Optional<QueryOptions> context = api.getContextManager().getQueryOptions(user);
+                if(context.isPresent()){
+                    cachedMetaData = Optional.of(user.getCachedData().getMetaData(context.get()));
+                }
+            }
+        }
+        return cachedMetaData;
+    }
+
+    public Optional<String> getMetaNameColor(UUID uuid) {
+        Optional<CachedMetaData> cachedMetaData = getMetaData(uuid);
+        return Optional.ofNullable(cachedMetaData.get().getMetaValue(getConfig().getString("meta")));
     }
 }
