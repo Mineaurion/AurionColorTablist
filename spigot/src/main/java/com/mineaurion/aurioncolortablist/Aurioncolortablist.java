@@ -60,11 +60,15 @@ public final class Aurioncolortablist extends JavaPlugin implements Listener {
     }
 
     public void leavingScoreBoard(Player player) {
-        Set<Team> teams = player.getScoreboard().getTeams();
-        for (Team team: teams) {
-            board.getTeam(team.getName()).removePlayer(player);
-            if(team.getSize() <= 1) {
-                team.unregister();
+        Optional<String> metaColor = getMetaNameColor(player.getUniqueId());
+        if(metaColor.isPresent()) {
+            Team team = board.getTeam(metaColor.get());
+            if(team != null){
+                team.removePlayer(player);
+                if(team.getSize() < 1) {
+                    System.out.println("Unregister team " + team.getSize());
+                    team.unregister();
+                }
             }
         }
     }
