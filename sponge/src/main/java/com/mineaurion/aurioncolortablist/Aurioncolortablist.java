@@ -1,12 +1,10 @@
 package com.mineaurion.aurioncolortablist;
 
 import com.google.inject.Inject;
-import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.Contexts;
-import me.lucko.luckperms.api.LuckPermsApi;
-import me.lucko.luckperms.api.User;
-import me.lucko.luckperms.api.caching.MetaData;
-import me.lucko.luckperms.api.caching.UserData;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.query.QueryOptions;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
@@ -24,14 +22,15 @@ import org.spongepowered.api.event.game.state.GameStoppedServerEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.service.ProviderRegistration;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Plugin(
@@ -62,16 +61,17 @@ public class Aurioncolortablist {
     Config config;
 
 
-    public Optional<LuckPermsApi> luckPermsApi;
+    public Optional<LuckPerms> api;
 
     @Listener
     public void Init(GamePreInitializationEvent event) throws IOException, ObjectMappingException {
-        luckPermsApi = Sponge.getPluginManager().getPlugin("luckperms").isPresent() ? LuckPerms.getApiSafe() : Optional.empty();
+        Optional<ProviderRegistration<LuckPerms>> provider = Sponge.getServiceManager().getRegistration(LuckPerms.class);
+        api = provider.map(ProviderRegistration::getProvider);
         if(!Files.exists(path)){
             game.getAssetManager().getAsset(this, "config.conf").get().copyToFile(path);
         }
         config = loader.load().getValue(Config.type);
-        if(luckPermsApi.isPresent()){
+        if(api.isPresent()){
             Task.builder()
                     .name("update-color-name")
                     .interval(1, TimeUnit.SECONDS)
@@ -103,10 +103,10 @@ public class Aurioncolortablist {
             Optional<Player> playerEntry = Sponge.getServer().getPlayer(entry.getProfile().getUniqueId());
             playerEntry.ifPresent( p -> {
                 if(config.prefix){
-                    newName.append(getPrefixLuckPerms(p).orElse(""));
+                    newName.append(getPlayerPrefix(p.getUniqueId()).orElse(""));
                 }
                 newName.append("&")
-                        .append(getMetanamecolor(p).orElse(""))
+                        .append(getMetaNameColor(p.getUniqueId()).orElse(""))
                         .append(p.getName());
             });
             entry.setDisplayName(TextSerializers.FORMATTING_CODE.deserialize(newName.toString()));
@@ -114,31 +114,30 @@ public class Aurioncolortablist {
         }
     }
 
-    private Optional<String> getMetanamecolor(Player player){
-        Optional<String> namecolor = Optional.empty();
-        LuckPermsApi api = luckPermsApi.get();
-        Optional<User> user = api.getUserSafe(player.getUniqueId());
-        if(user.isPresent()){
-            Contexts contexts = api.getContextsForPlayer(player);
-            MetaData metaData = user.get().getCachedData().getMetaData(contexts);
-
-            Map<String ,String> metas = metaData.getMeta();
-            namecolor = Optional.of(metas.get(config.meta));
+    private Optional<CachedMetaData> getMetaData(UUID uuid){
+        Optional<CachedMetaData> cachedMetaData = Optional.empty();
+        if(this.api.isPresent()){
+            User user = this.api.get().getUserManager().getUser(uuid);
+            if(user != null){
+                Optional<QueryOptions> context = api.get().getContextManager().getQueryOptions(user);
+                if(context.isPresent()){
+                    cachedMetaData = Optional.of(user.getCachedData().getMetaData(context.get()));
+                }
+            }
         }
-        return namecolor;
+        return cachedMetaData;
     }
 
-    private Optional<String> getPrefixLuckPerms(Player player){
-        Optional<String> prefix = Optional.empty();
-        LuckPermsApi api = luckPermsApi.get();
-        Optional<User> user = api.getUserSafe(player.getUniqueId());
-        if(user.isPresent()){
-            Contexts contexts = api.getContextsForPlayer(player);
-            MetaData metaData = user.get().getCachedData().getMetaData(contexts);
-            prefix = Optional.of(metaData.getPrefix());
-        }
-        return prefix;
+    public Optional<String> getPlayerPrefix(UUID uuid){
+        Optional<CachedMetaData> cachedMetaData = getMetaData(uuid);
+        return Optional.ofNullable(cachedMetaData.get().getPrefix());
     }
+
+    public Optional<String> getMetaNameColor(UUID uuid) {
+        Optional<CachedMetaData> cachedMetaData = getMetaData(uuid);
+        return Optional.ofNullable(cachedMetaData.get().getMetaValue(config.meta));
+    }
+
 
     private void disablePlugin(){
         Sponge.getEventManager().unregisterListeners(this);
